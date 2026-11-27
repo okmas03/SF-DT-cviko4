@@ -40,7 +40,7 @@ Postup:
 - **Úroveň 2**: všetky odkazy zo stránok úrovne 1
 
 Pravidlá:
-- Sťahujú sa **iba stránky z domény lua.org**. Externé odkazy sa zapíšu ako cieľové uzly, ale ďalej sa nesledujú.
+- Sťahujú sa **iba stránky z domény lua.org**. Externé odkazy sa zapíšu ako cieľové uzly, ale ďalej sa nesledujú. Cieľom je ohodnotiť štruktúru vybranej stránky. Odkazy z cudzích webov by do grafu priniesli nesúvisiaci obsah a pri väčšej hĺbke by sa crawl rozrástol do celého internetu (GitHub, Google Groups…). Pri hĺbke 2 sa takto nestiahne jediná stránka z úrovne 1: `https://www.puc-rio.br/`.
 - **Footer sa ignoruje.** Pred hľadaním odkazov sa z HTML odstráni `<footer>` a prvky, ktoré majú v `class` alebo `id` slovo `footer`.
 - Odkazy na **sociálne siete** (Facebook, Instagram, LinkedIn, X/Twitter, TikTok, Discord…) sa zahadzujú.
 - Zahadzujú sa odkazy, ktoré nie sú webové stránky: `mailto:`, `javascript:`, obrázky, archívy, PDF…
