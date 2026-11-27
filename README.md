@@ -9,6 +9,7 @@ a na datasete odkazov stiahnutom zo stránky **https://www.lua.org/**.
 ├── crawler.py          # krok 1 – zber odkazov zo stránky
 ├── dataset.py          # krok 2 – spracovanie datasetu
 ├── pagerank.py         # krok 3 – implementácia PageRank
+├── sample.py           # krok 4 – ukážka na vzorových dátach
 ├── data/
 │   ├── raw_edges.csv   # vstupné dáta – všetky odkazy (vrátane duplicít)
 │   ├── dataset.csv     # spracovaný dataset – unikátne hrany bez self-loopov
@@ -118,3 +119,57 @@ for page, rank in sort_ranking(ranks):
 ```
 
 Správnosť som overil nezávislým výpočtom. Stacionárny vektor `r = A·r` je vlastný vektor matice A pre vlastné číslo 1 (`numpy.linalg.eig`) a zhoduje sa s výsledkom power iterácie.
+
+## 4. Ukážka na vzorových dátach
+
+```bash
+python sample.py
+```
+
+Vzorové dáta zo zadania: `{1 -> 2, 1 -> 3, 2 -> 4, 3 -> 1, 3 -> 2, 3 -> 4, 4 -> 3}`, kde N = 4 a β = 0.85.
+
+Matica M (stĺpec j = prechody zo stránky j):
+
+```
+             1       2       3       4
+     1  0.0000  0.0000  0.3333  0.0000
+     2  0.5000  0.0000  0.3333  0.0000
+     3  0.5000  0.0000  0.0000  1.0000
+     4  0.0000  1.0000  0.3333  0.0000
+```
+
+Matica A = β·M + (1−β)·(1/N)·E:
+
+```
+             1       2       3       4
+     1  0.0375  0.0375  0.3208  0.0375
+     2  0.4625  0.0375  0.3208  0.0375
+     3  0.4625  0.0375  0.0375  0.8875
+     4  0.0375  0.8875  0.3208  0.0375
+```
+
+Priebeh iterácií r(t):
+
+```
+     t       1       2       3       4
+     0  0.2500  0.2500  0.2500  0.2500
+     1  0.1083  0.2146  0.3562  0.3208
+     2  0.1384  0.1845  0.3562  0.3208
+     3  0.1384  0.1973  0.3690  0.2952
+     5  0.1359  0.1963  0.3612  0.3067
+    10  0.1388  0.1976  0.3569  0.3067
+    20  0.1387  0.1976  0.3571  0.3066
+    50  0.1387  0.1976  0.3571  0.3066
+```
+
+**Výsledné ranky r(50):**
+
+| Poradie | Stránka | Rank |
+|---|---|---|
+| 1. | 3 | 0.3571 |
+| 2. | 4 | 0.3066 |
+| 3. | 2 | 0.1976 |
+| 4. | 1 | 0.1387 |
+| | **súčet** | **1.0000** |
+
+Algoritmus skonverguje približne po 20 iteráciách. Najvyšší rank má stránka 3: odkazuje na ňu stránka 1 a stránka 4 posiela celý svoj rank práve jej. Výsledok sa zhoduje s vlastným vektorom matice A (`r = A·r`), ktorý vypočíta `numpy.linalg.eig`.
