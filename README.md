@@ -22,7 +22,7 @@ a na datasete odkazov stiahnutom zo stránky **https://www.lua.org/**.
 ```
 
 ## Inštalácia
-ma
+
 ```bash
 pip install -r requirements.txt
 ```
