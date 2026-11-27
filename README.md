@@ -8,6 +8,7 @@ a na datasete odkazov stiahnutom zo stránky **https://www.lua.org/**.
 ```
 ├── crawler.py          # krok 1 – zber odkazov zo stránky
 ├── dataset.py          # krok 2 – spracovanie datasetu
+├── pagerank.py         # krok 3 – implementácia PageRank
 ├── data/
 │   ├── raw_edges.csv   # vstupné dáta – všetky odkazy (vrátane duplicít)
 │   ├── dataset.csv     # spracovaný dataset – unikátne hrany bez self-loopov
@@ -87,3 +88,33 @@ Výstupy:
 - `data/nodes.csv`: stránky `id,url`
 
 Väčšina stránok nemá v datasete odchádzajúce odkazy. Pri hĺbke 2 sa totiž stiahne len úvodná stránka a jej podstránky, ciele z úrovne 2 sa už nesťahujú. Externé stránky sa nesťahujú vôbec. Ich stĺpec v matici M by bol nulový, preto ich PageRank musí ošetriť (viď krok 3).
+
+## 3. Implementácia PageRank
+
+Súbor `pagerank.py`, Google formulácia:
+
+```
+r(0)   = vektor dĺžky N s hodnotami 1/N
+r(t+1) = A · r(t)
+A      = β·M + (1 − β)·(1/N)·E
+```
+
+- `β = 0.85`: pravdepodobnosť sledovania existujúcich odkazov
+- `N`: celkový počet stránok
+- `E`: matica jednotiek N×N
+- `M`: matica prechodov, `M[i][j] = 1 / (počet odchádzajúcich odkazov z j)`, ak `j → i`. Súčet každého stĺpca je 1.
+- Počet iterácií: 50, teda výsledok je `r(50)`.
+
+**Dangling nodes:** stránka bez odchádzajúcich odkazov by mala v M nulový stĺpec a ranking by sa z nej „strácal“ (súčet `r` by klesal pod 1). Jej stĺpec sa preto vyplní hodnotou `1/N`: náhodný surfer z takej stránky skočí na ľubovoľnú stránku.
+
+Použitie:
+
+```python
+from pagerank import pagerank, sort_ranking
+
+ranks = pagerank([(1, 2), (1, 3), (2, 4), (3, 1), (3, 2), (3, 4), (4, 3)])
+for page, rank in sort_ranking(ranks):
+    print(page, round(rank, 4))
+```
+
+Správnosť som overil nezávislým výpočtom. Stacionárny vektor `r = A·r` je vlastný vektor matice A pre vlastné číslo 1 (`numpy.linalg.eig`) a zhoduje sa s výsledkom power iterácie.
