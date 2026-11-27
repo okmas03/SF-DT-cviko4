@@ -81,12 +81,19 @@ class Crawler:
             scheme, netloc = "https", self.start_host
         if path.endswith(("/index.html", "/index.htm")):
             path = path[: path.rfind("/") + 1]
+        if len(path) > 1:
+            # '/manual/' a '/manual' sú tá istá stránka (server presmeruje) -> bez koncového '/'
+            path = path.rstrip("/")
         return urlunparse((scheme, netloc, path, "", parts.query, ""))
 
     # ---------- sťahovanie a parsovanie ----------
 
-    def fetch_html(self, url: str) -> str | None:
-        """Stiahne stránku; vráti HTML alebo None (chyba / nie je to HTML)."""
+    def fetch_html(self, url: str) -> tuple[str, str] | None:
+        """Stiahne stránku; vráti (HTML, skutočná URL po presmerovaní) alebo None.
+
+        Skutočná URL slúži ako základ pre relatívne odkazy – napr. '/manual' sa presmeruje
+        na '/manual/' a odkaz 'readme.html' potom vedie na '/manual/readme.html'.
+        """
         try:
             r = self.session.get(url, timeout=TIMEOUT)
         except requests.RequestException as e:
@@ -97,7 +104,7 @@ class Crawler:
             return None
         if "text/html" not in r.headers.get("Content-Type", ""):
             return None
-        return r.text
+        return r.text, r.url
 
     def extract_links(self, html: str, page_url: str) -> list[str]:
         """Vráti zoznam (aj s duplicitami) normalizovaných odkazov zo stránky, bez footeru."""
@@ -138,12 +145,13 @@ class Crawler:
 
         while queue:
             url, depth = queue.popleft()
-            html = self.fetch_html(url)
+            fetched = self.fetch_html(url)
             time.sleep(DELAY)
-            if html is None:
+            if fetched is None:
                 continue
 
-            links = self.extract_links(html, url)
+            html, final_url = fetched
+            links = self.extract_links(html, final_url)
             edges.extend((url, target) for target in links)
             print(f"[hĺbka {depth}] {url}  ->  {len(links)} odkazov")
 
